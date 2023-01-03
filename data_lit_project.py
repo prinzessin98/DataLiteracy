@@ -3,10 +3,13 @@
 import numpy as np
 #import matplotlib.pyplot as plot
 import pandas as pd 
+from pathlib import Path
 
 ##Loading the data
-path ="C:/Users/Fynn/Documents/Uni/Master/DataLiteracy/Project/Daten/data.csv"
-raw_df =  pd.read_csv(path, header=1,sep=";", names=['date','Tunnel','Steinlach','Hirschau'])
+#path ="C:/Users/Fynn/Documents/Uni/Master/DataLiteracy/Project/Daten/data.csv"
+p = Path.cwd()
+p = str(p)+"/Daten/data.csv"
+raw_df =  pd.read_csv(p, header=1,sep=";", names=['date','Tunnel','Steinlach','Hirschau'])
 #sum up cyclists over each day
 raw_df.head
 raw_df['date']=pd.to_datetime(raw_df['date']).dt.date
