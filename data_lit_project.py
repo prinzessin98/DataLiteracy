@@ -49,17 +49,22 @@ dates=dates18.append(dates19).append(dates20).append(dates21)
 #print(pd.to_datetime(df.index))
 #print(y_train)
 #plot tunnel for each week separately over years
+f, (ax1,ax2,ax3)=plt.subplots(1,3,sharey=True)
 for d18,d19,d20,d21 in zip(list(dates18),list(dates19),list(dates20),list(dates21)):
-    plt.plot([2018,2019,2020,2021],df['Tunnel'].filter(items=[d18,d19,d20,d21],axis=0))
+    ax1.plot([2018,2019,2020,2021],df['Tunnel'].filter(items=[d18,d19,d20,d21],axis=0))
+ax1.set_title('Tunnel')
 #plt.plot([2018,2019,2020,2021],df.filter(items=[dates18[0],dates19[0],dates20[0],dates21[0]],axis=0))
-plt.show()
+#plt.show()
 #plot Steinlach for each week separately over years
 for d18,d19,d20,d21 in zip(list(dates18),list(dates19),list(dates20),list(dates21)):
-    plt.plot([2018,2019,2020,2021],df['Steinlach'].filter(items=[d18,d19,d20,d21],axis=0))
-plt.show()
+    ax2.plot([2018,2019,2020,2021],df['Steinlach'].filter(items=[d18,d19,d20,d21],axis=0))
+ax2.set_title('Steinlach')
+#plt.show()
 #plot Hirschau for each week separately over years
 for d18,d19,d20,d21 in zip(list(dates18),list(dates19),list(dates20),list(dates21)):
-    plt.plot([2018,2019,2020,2021],df['Hirschau'].filter(items=[d18,d19,d20,d21],axis=0))
+    ax3.plot([2018,2019,2020,2021],df['Hirschau'].filter(items=[d18,d19,d20,d21],axis=0))
+ax3.set_title('Hirschau')
+
 plt.show()
 ############# Train data Part 2 #########################
 
@@ -71,17 +76,20 @@ dates=dates18.append(dates19).append(dates20).append(dates21)
 #print(pd.to_datetime(df.index))
 #print(y_train)
 #plot tunnel for each week separately over years
+f, (ax1,ax2,ax3)=plt.subplots(1,3,sharey=True)
+
 for d18,d19,d20,d21 in zip(list(dates18),list(dates19),list(dates20),list(dates21)):
-    plt.plot([2018,2019,2020,2021],df['Tunnel'].filter(items=[d18,d19,d20,d21],axis=0))
+    ax1.plot([2018,2019,2020,2021],df['Tunnel'].filter(items=[d18,d19,d20,d21],axis=0))
 #plt.plot([2018,2019,2020,2021],df.filter(items=[dates18[0],dates19[0],dates20[0],dates21[0]],axis=0))
-plt.show()
+ax1.set_title('Tunnel')
 #plot Steinlach for each week separately over years
 for d18,d19,d20,d21 in zip(list(dates18),list(dates19),list(dates20),list(dates21)):
-    plt.plot([2018,2019,2020,2021],df['Steinlach'].filter(items=[d18,d19,d20,d21],axis=0))
-plt.show()
+    ax2.plot([2018,2019,2020,2021],df['Steinlach'].filter(items=[d18,d19,d20,d21],axis=0))
+ax2.set_title('Steinlach')
 #plot Hirschau for each week separately over years
 for d18,d19,d20,d21 in zip(list(dates18),list(dates19),list(dates20),list(dates21)):
-    plt.plot([2018,2019,2020,2021],df['Hirschau'].filter(items=[d18,d19,d20,d21],axis=0))
+    ax3.plot([2018,2019,2020,2021],df['Hirschau'].filter(items=[d18,d19,d20,d21],axis=0))
+ax3.set_title('Hirschau')
 plt.show()
 
 ############# Test data  #########################
@@ -93,3 +101,5 @@ dates22_after = pd.date_range("2022"+start_date_after, "2022"+end_date_after, fr
 #plot tunnel for each week separately over years
 cyclists22_before= df.filter(items=list(dates22_before),axis=0)
 cyclists22_after= df.filter(items=list(dates22_after),axis=0)
+len(cyclists22_before)
+len(dates22_before)
