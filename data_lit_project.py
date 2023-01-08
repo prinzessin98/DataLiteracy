@@ -1,10 +1,11 @@
 #import math
 #import scipy
 import numpy as np
-#import matplotlib.pyplot as plot
+import matplotlib.pyplot as plt
 import pandas as pd 
 from pathlib import Path
-
+from pandas.plotting import register_matplotlib_converters
+register_matplotlib_converters()
 ##Loading the data
 #path ="C:/Users/Fynn/Documents/Uni/Master/DataLiteracy/Project/Daten/data.csv"
 p = Path.cwd()
@@ -24,3 +25,7 @@ df['week']= weeks.tolist()
 df['week']=pd.to_datetime(df['week']).dt.date
 df=df.groupby('week').sum()
 print(df.head())
+#plotten
+#plt.plot(raw_df)
+plt.plot(df)
+plt.show()
