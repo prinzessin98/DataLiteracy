@@ -30,6 +30,8 @@ print(df.tail())
 #plt.plot(raw_df)
 #plt.plot(df)
 #plt.show()
+############# Train data Part 1 #########################
+
 dates18=pd.date_range('2018-01-01', '2018-04-05', freq='W')
 dates19=pd.date_range('2019-01-01', '2019-04-05', freq='W')
 dates20=pd.date_range('2020-01-01', '2020-04-05', freq='W')
