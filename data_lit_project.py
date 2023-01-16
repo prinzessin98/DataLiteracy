@@ -117,8 +117,8 @@ for loc in ["Tunnel","Steinlach","Hirschau"]:
     X_fore = dp.out_of_sample(48)
     y_fore = pd.Series(model.predict(X_fore), index=X_fore.index)
     tit=f" {loc} Traffic - Seasonal Forecast"
-    cyclists22_before[loc].plot(color="green",style='+', label="Test: Cycl. before blocking")
-    cyclists22_after[loc].plot(color="darkred",style='^', label="Test: Cycl. after blocking")
+    cyclists22_before[loc].plot(color="red",style='+', label="Test: Cycl. before blocking")
+    cyclists22_after[loc].plot(color="red",style='^', label="Test: Cycl. after blocking")
     a.vlines(dates22_after[0], df[loc].min(), df[loc].max(),color="darkgrey", linestyles="dashed", label="Mühlstraße blocked for cars")    
     a = y.plot(color="blue", style='.', label="Train: Cycl. per week", title=tit)
     a = y_pred.plot(ax=a, label="Model training pred.")
