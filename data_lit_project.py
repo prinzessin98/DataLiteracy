@@ -60,7 +60,7 @@ print(df_train.tail())
 dates22_before = pd.date_range("2022"+start_date_test, "2022"+end_date_before, freq='W').date
 dates22_after = pd.date_range("2022"+start_date_after, "2022"+end_date_after, freq='W').date
 #plot tunnel for each week separately over years
-if (isinstance(df.index, np.ndarray)):
+if (not isinstance(df.index, np.ndarray)):
     df.index = df.index.date 
 cyclists22= df.filter(items=pd.date_range("2022"+start_date_test, "2022"+end_date_after, freq='W').date)
 cyclists22_before= df.filter(items=list(dates22_before),axis=0)
@@ -131,8 +131,6 @@ for loc in ["Tunnel","Steinlach","Hirschau"]:
  #   print(y_fore)
     plt.show()
     
-    
- 
 for loc in ["Tunnel","Steinlach","Hirschau"]:
     y = df_train[loc]
     model = LinearRegression(fit_intercept=False)
