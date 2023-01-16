@@ -7,6 +7,8 @@ from sklearn.linear_model import LinearRegression
 from pathlib import Path
 from pandas.plotting import register_matplotlib_converters
 from statsmodels.tsa.deterministic import CalendarFourier, DeterministicProcess
+from yellowbrick.regressor import ResidualsPlot, PredictionError
+
 
 
 register_matplotlib_converters()
@@ -58,6 +60,8 @@ print(df_train.tail())
 dates22_before = pd.date_range("2022"+start_date_test, "2022"+end_date_before, freq='W').date
 dates22_after = pd.date_range("2022"+start_date_after, "2022"+end_date_after, freq='W').date
 #plot tunnel for each week separately over years
+if (isinstance(df.index, np.ndarray)):
+    df.index = df.index.date 
 cyclists22= df.filter(items=pd.date_range("2022"+start_date_test, "2022"+end_date_after, freq='W').date)
 cyclists22_before= df.filter(items=list(dates22_before),axis=0)
 cyclists22_after= df.filter(items=list(dates22_after),axis=0)
@@ -128,10 +132,13 @@ for loc in ["Tunnel","Steinlach","Hirschau"]:
     plt.show()
     
     
- for loc in ["Tunnel","Steinlach","Hirschau"]:
+ 
+for loc in ["Tunnel","Steinlach","Hirschau"]:
     y = df_train[loc]
     model = LinearRegression(fit_intercept=False)
     _ = model.fit(X, y)
+    X_fore = dp.out_of_sample(len(cyclists22_after))
+
     # plot the residuals training data
     visualizer = ResidualsPlot(model, qqplot=True, hist=False)  
     visualizer.fit(X, y)  # Fit the training data to the visualizer
