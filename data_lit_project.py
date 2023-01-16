@@ -126,3 +126,25 @@ for loc in ["Tunnel","Steinlach","Hirschau"]:
     _ = a.legend(loc="lower left")
  #   print(y_fore)
     plt.show()
+    
+    
+ for loc in ["Tunnel","Steinlach","Hirschau"]:
+    y = df_train[loc]
+    model = LinearRegression(fit_intercept=False)
+    _ = model.fit(X, y)
+    # plot the residuals training data
+    visualizer = ResidualsPlot(model, qqplot=True, hist=False)  
+    visualizer.fit(X, y)  # Fit the training data to the visualizer
+    visualizer.score(X_fore, cyclists22_after[loc])  # Evaluate the model on the test data
+    visualizer.show()  # Finalize and render the figure
+    
+    # plot the prediction error
+    pred_err_train = PredictionError(model)
+    pred_err_train.fit(X,y)    #prediction error for train set
+    pred_err_train.score(X,y)
+    pred_err_train.show() 
+    
+    pred_err_test = PredictionError(model)
+    pred_err_test.fit(X,y)                             
+    pred_err_test.score(X_fore, cyclists22_after[loc]) # prediction error for test set
+    pred_err_test.show()
