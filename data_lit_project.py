@@ -8,6 +8,7 @@ from pathlib import Path
 from pandas.plotting import register_matplotlib_converters
 from statsmodels.tsa.deterministic import CalendarFourier, DeterministicProcess
 
+
 register_matplotlib_converters()
 ##Loading the data
 #path ="C:/Users/Fynn/Documents/Uni/Master/DataLiteracy/Project/Daten/data.csv"
@@ -27,6 +28,7 @@ weeks= np.repeat(weeks, 7)
 df['week']= weeks.tolist()
 df['week']=pd.to_datetime(df['week']).dt.date
 df=df.groupby('week').sum()
+
 #print(df.tail())
 #plotten
 #plt.plot(raw_df)
@@ -37,8 +39,8 @@ df.index=pd.to_datetime(df.index)
 
 start_date_before="-01-01"
 end_date_before="-04-05"
-start_date_after="-06-04"
-end_date_after="-04-05"
+start_date_after="-04-06"
+end_date_after="-11-27"
 
 ############# Train data Part 1 #########################
 
@@ -46,10 +48,10 @@ end_date_after="-04-05"
 #dates19=pd.date_range("2019"+start_date_before, "2019"+end_date_before, freq='W')
 #dates20=pd.date_range("2020"+start_date_before, "2020"+end_date_before, freq='W')
 #dates21=pd.date_range("2021"+start_date_before, "2021"+end_date_before, freq='W')
-dates=pd.date_range("2022"+start_date_after, "2022-11-27", freq='W')
+dates_after=pd.date_range("2022"+start_date_after, "2022"+end_date_after, freq='W')
 df_train=df.copy()
-df_train.index=pd.date_range("2018"+start_date_before, "2022-11-27", freq='W')
-df_train=df_train.drop(dates)
+df_train.index=pd.date_range("2018"+start_date_before, "2022"+end_date_after, freq='W')
+df_train=df_train.drop(dates_after)
 print(df_train.tail())
 
 ##print(pd.to_datetime(df.index))
@@ -108,7 +110,6 @@ dates22_after = pd.date_range("2022"+start_date_after, "2022"+end_date_after, fr
 cyclists22_before= df.filter(items=list(dates22_before),axis=0)
 cyclists22_after= df.filter(items=list(dates22_after),axis=0)
 #print(len(cyclists22_before),len(dates22_before))
-
 ########### Prediction with seasonality #######################
 
 fourier = CalendarFourier(freq="A", order=15)  # 15 sin/cos pairs for "A"nnual seasonality
@@ -150,13 +151,13 @@ dp = DeterministicProcess(
     index=df_train.index,
     constant=True,               # dummy feature for bias (y-intercept)
     order=1,                     # trend (order 1 means linear)
-    seasonal=True,               # weekly seasonality (indicators)
+    seasonal=False,               # weekly seasonality (indicators)
     additional_terms=[fourier],  # annual seasonality (fourier)
     drop=True,                   # drop terms to avoid collinearity
 )
 
 X = dp.in_sample()  # create features for dates in tunnel.index
-
+#print(X)
 for loc in ["Tunnel","Steinlach","Hirschau"]:
     fig, a = plt.subplots(1,1)
     y = df_train[loc]
@@ -164,13 +165,13 @@ for loc in ["Tunnel","Steinlach","Hirschau"]:
     _ = model.fit(X, y)
 
     y_pred = pd.Series(model.predict(X), index=y.index)
-    X_fore = dp.out_of_sample(steps=40)
+    X_fore = dp.out_of_sample(35)
     y_fore = pd.Series(model.predict(X_fore), index=X_fore.index)
     tit=f" {loc} Traffic - Seasonal Forecast"
-
+    cyclists22_after[loc].plot(color="darkred",style='.')
     a = y.plot(color="blue", style='.', title=tit)
     a = y_pred.plot(ax=a, label="Seasonal")
     a = y_fore.plot(ax=a, label="Seasonal Forecast", color='C3')
     _ = a.legend()
-
+ #   print(y_fore)
     plt.show()
