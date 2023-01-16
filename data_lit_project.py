@@ -39,83 +39,34 @@ df.index=pd.to_datetime(df.index)
 
 start_date_before="-01-01"
 end_date_before="-04-05"
+end_date_train="-12-31"
+start_date_test="-01-01"
 start_date_after="-04-06"
 end_date_after="-11-27"
 
-############# Train data Part 1 #########################
+############# Train data #########################
 
-#dates18=pd.date_range("2018"+start_date_before, "2018"+end_date_before, freq='W')
-#dates19=pd.date_range("2019"+start_date_before, "2019"+end_date_before, freq='W')
-#dates20=pd.date_range("2020"+start_date_before, "2020"+end_date_before, freq='W')
-#dates21=pd.date_range("2021"+start_date_before, "2021"+end_date_before, freq='W')
-dates_after=pd.date_range("2022"+start_date_after, "2022"+end_date_after, freq='W')
+dates_after=pd.date_range("2022"+start_date_test, "2022"+end_date_after, freq='W')
 df_train=df.copy()
 df_train.index=pd.date_range("2018"+start_date_before, "2022"+end_date_after, freq='W')
 df_train=df_train.drop(dates_after)
 print(df_train.tail())
 
-##print(pd.to_datetime(df.index))
-##print(y_train)
-##plot tunnel for each week separately over years
-#f, (ax1,ax2,ax3)=plt.subplots(1,3,sharey=True)
-#for d18,d19,d20,d21 in zip(list(dates18),list(dates19),list(dates20),list(dates21)):
-#    ax1.plot([2018,2019,2020,2021],df['Tunnel'].filter(items=[d18,d19,d20,d21],axis=0))
-#ax1.set_title('Tunnel')
-##plt.plot([2018,2019,2020,2021],df.filter(items=[dates18[0],dates19[0],dates20[0],dates21[0]],axis=0))
-##plt.show()
-##plot Steinlach for each week separately over years
-#for d18,d19,d20,d21 in zip(list(dates18),list(dates19),list(dates20),list(dates21)):
-#    ax2.plot([2018,2019,2020,2021],df['Steinlach'].filter(items=[d18,d19,d20,d21],axis=0))
-#ax2.set_title('Steinlach')
-##plt.show()
-##plot Hirschau for each week separately over years
-#for d18,d19,d20,d21 in zip(list(dates18),list(dates19),list(dates20),list(dates21)):
-#    ax3.plot([2018,2019,2020,2021],df['Hirschau'].filter(items=[d18,d19,d20,d21],axis=0))
-#ax3.set_title('Hirschau')
-
-##plt.show()
-############## Train data Part 2 #########################
-
-#dates18=pd.date_range("2018"+start_date_after, "2018"+end_date_after, freq='W')
-#dates19=pd.date_range("2019"+start_date_after, "2019"+end_date_after, freq='W')
-#dates20=pd.date_range("2020"+start_date_after, "2020"+end_date_after, freq='W')
-#dates21=pd.date_range("2021"+start_date_after, "2021"+end_date_after, freq='W')
-#dates=dates18.append(dates19).append(dates20).append(dates21)
-##print(pd.to_datetime(df.index))
-##print(y_train)
-##plot tunnel for each week separately over years
-#f, (ax1,ax2,ax3)=plt.subplots(1,3,sharey=True)
-
-#for d18,d19,d20,d21 in zip(list(dates18),list(dates19),list(dates20),list(dates21)):
-#    ax1.plot([2018,2019,2020,2021],df['Tunnel'].filter(items=[d18,d19,d20,d21],axis=0))
-##plt.plot([2018,2019,2020,2021],df.filter(items=[dates18[0],dates19[0],dates20[0],dates21[0]],axis=0))
-#ax1.set_title('Tunnel')
-##plot Steinlach for each week separately over years
-#for d18,d19,d20,d21 in zip(list(dates18),list(dates19),list(dates20),list(dates21)):
-#    ax2.plot([2018,2019,2020,2021],df['Steinlach'].filter(items=[d18,d19,d20,d21],axis=0))
-#ax2.set_title('Steinlach')
-##plot Hirschau for each week separately over years
-#for d18,d19,d20,d21 in zip(list(dates18),list(dates19),list(dates20),list(dates21)):
-#    ax3.plot([2018,2019,2020,2021],df['Hirschau'].filter(items=[d18,d19,d20,d21],axis=0))
-#ax3.set_title('Hirschau')
-##plt.show()
 
 ############# Test data  #########################
 
-dates22_before = pd.date_range("2022"+start_date_before, "2022"+end_date_before, freq='W').date
+dates22_before = pd.date_range("2022"+start_date_test, "2022"+end_date_before, freq='W').date
 dates22_after = pd.date_range("2022"+start_date_after, "2022"+end_date_after, freq='W').date
-#print(pd.to_datetime(df.index))
-#print(y_train)
 #plot tunnel for each week separately over years
+cyclists22= df.filter(items=pd.date_range("2022"+start_date_test, "2022"+end_date_after, freq='W').date)
 cyclists22_before= df.filter(items=list(dates22_before),axis=0)
 cyclists22_after= df.filter(items=list(dates22_after),axis=0)
-#print(len(cyclists22_before),len(dates22_before))
 ########### Prediction with seasonality #######################
 
-fourier = CalendarFourier(freq="A", order=15)  # 15 sin/cos pairs for "A"nnual seasonality
+fourier = CalendarFourier(freq="A", order=20)  # 15 sin/cos pairs for "A"nnual seasonality
 def plot_periodogram(ts, detrend='linear', ax=None):
     from scipy.signal import periodogram
-    fs = pd.Timedelta("1Y") / pd.Timedelta("1D")
+    fs = pd.Timedelta("1Y") / pd.Timedelta("1W")
     freqencies, spectrum = periodogram(
         ts,
         fs=fs,
@@ -127,7 +78,7 @@ def plot_periodogram(ts, detrend='linear', ax=None):
         _, ax = plt.subplots()
     ax.step(freqencies, spectrum, color="purple")
     ax.set_xscale("log")
-    ax.set_xticks([1, 2, 4, 6, 12, 26, 52, 104])
+    ax.set_xticks([1, 2, 4, 6, 12, 26])
     ax.set_xticklabels(
         [
             "Annual (1)",
@@ -135,9 +86,7 @@ def plot_periodogram(ts, detrend='linear', ax=None):
             "Quarterly (4)",
             "Bimonthly (6)",
             "Monthly (12)",
-            "Biweekly (26)",
-            "Weekly (52)",
-            "Semiweekly (104)",
+            "Biweekly (26)"
         ],
         rotation=30,
     )
@@ -146,7 +95,7 @@ def plot_periodogram(ts, detrend='linear', ax=None):
     ax.set_title("Periodogram")
     return ax
 #plot_periodogram(df["Tunnel"])
-plt.show()
+#plt.show()
 dp = DeterministicProcess(
     index=df_train.index,
     constant=True,               # dummy feature for bias (y-intercept)
@@ -165,10 +114,13 @@ for loc in ["Tunnel","Steinlach","Hirschau"]:
     _ = model.fit(X, y)
 
     y_pred = pd.Series(model.predict(X), index=y.index)
-    X_fore = dp.out_of_sample(35)
+    print(len(cyclists22)) 
+    X_fore = dp.out_of_sample(48)
     y_fore = pd.Series(model.predict(X_fore), index=X_fore.index)
     tit=f" {loc} Traffic - Seasonal Forecast"
-    cyclists22_after[loc].plot(color="darkred",style='.')
+    cyclists22_before[loc].plot(color="green",style='*', label="cycl. before blocking")
+    cyclists22_after[loc].plot(color="darkred",style='^', label="cycl. after blocking")
+    a.vlines(dates22_after[0], df[loc].min(), df[loc].max(),color="black", label="Mühlstraße blocked for cars")
     a = y.plot(color="blue", style='.', title=tit)
     a = y_pred.plot(ax=a, label="Seasonal")
     a = y_fore.plot(ax=a, label="Seasonal Forecast", color='C3')
