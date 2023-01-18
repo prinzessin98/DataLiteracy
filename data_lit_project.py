@@ -66,8 +66,10 @@ cyclists22= df.filter(items=pd.date_range("2022"+start_date_test, "2022"+end_dat
 cyclists22_before= df.filter(items=list(dates22_before),axis=0)
 cyclists22_after= df.filter(items=list(dates22_after),axis=0)
 ########### Prediction with seasonality #######################
+fourierno=15
+fourier = CalendarFourier(freq="A", order=fourierno)  # 15 sin/cos pairs for "A"nnual seasonality
 
-fourier = CalendarFourier(freq="A", order=20)  # 15 sin/cos pairs for "A"nnual seasonality
+
 def plot_periodogram(ts, detrend='linear', ax=None):
     from scipy.signal import periodogram
     fs = pd.Timedelta("1Y") / pd.Timedelta("1W")
@@ -104,13 +106,14 @@ dp = DeterministicProcess(
     index=df_train.index,
     constant=True,               # dummy feature for bias (y-intercept)
     order=1,                     # trend (order 1 means linear)
-    seasonal=False,               # weekly seasonality (indicators)
+    seasonal=True,               # weekly seasonality (indicators)
     additional_terms=[fourier],  # annual seasonality (fourier)
     drop=True,                   # drop terms to avoid collinearity
 )
 
 X = dp.in_sample()  # create features for dates in tunnel.index
 #print(X)
+# create plots for counting points predicting the no of cyclists for 2022
 for loc in ["Tunnel","Steinlach","Hirschau"]:
     fig, a = plt.subplots(1,1)
     y = df_train[loc]
@@ -121,15 +124,22 @@ for loc in ["Tunnel","Steinlach","Hirschau"]:
     X_fore = dp.out_of_sample(48)
     y_fore = pd.Series(model.predict(X_fore), index=X_fore.index)
     tit=f" {loc} Traffic - Seasonal Forecast"
-    cyclists22_before[loc].plot(color="red",style='+', label="Test: Cycl. before blocking")
-    cyclists22_after[loc].plot(color="red",style='^', label="Test: Cycl. after blocking")
+    cyclists22_before[loc].plot(color="red",style='^', label="Test data bef. blocking")
+    cyclists22_after[loc].plot(color="red",style='*', label="Test data aft. blocking")
     a.vlines(dates22_after[0], df[loc].min(), df[loc].max(),color="darkgrey", linestyles="dashed", label="Mühlstraße blocked for cars")    
-    a = y.plot(color="blue", style='.', label="Train: Cycl. per week", title=tit)
-    a = y_pred.plot(ax=a, label="Model training pred.")
-    a = y_fore.plot(ax=a, label="Model test pred.", color='C3')
+    a = y.plot(color="blue", style='.', label="Train data", title=tit)
+    a = y_pred.plot(ax=a, label="Train pred.")
+    a = y_fore.plot(ax=a, label="Test pred.", color='red')
+    a.spines['top'].set_visible(False)
+    a.spines['right'].set_visible(False)
+    a.grid(False)
+    plt.xlabel("date")
+    plt.ylabel("No. of cyclists/week")
     _ = a.legend(loc="lower left")
+    plt.tight_layout()
  #   print(y_fore)
-    plt.show()
+    #plt.show()
+    plt.savefig(f"{loc}_pred_fourierno{fourierno}.png",dpi=600)
     
 for loc in ["Tunnel","Steinlach","Hirschau"]:
     y = df_train[loc]
