@@ -61,7 +61,7 @@ cyclists22_after= df.filter(items=list(dates22_after),axis=0)
 ########### Prediction with seasonality #######################
 
 #number of fourier pairs
-fourierno=3
+fourierno=28
 fourier = CalendarFourier(freq="A", order=fourierno)  # sin/cos pairs for Annual seasonality
 
 # function to plot a periodogram
@@ -103,7 +103,7 @@ dp = DeterministicProcess(
     index=df_train.index,
     constant=True,               
     order=1,                     
-    seasonal=True,               
+    seasonal=False,               
     additional_terms=[fourier],
     drop=True)
 
@@ -162,8 +162,6 @@ else:
         plt.ylabel("No. of cyclists/week")
         _ = a.legend(loc="lower left")
         plt.tight_layout()
-     #   print(y_fore)
-        #plt.show()
         plt.savefig(f"{loc}_pred_fourierno{fourierno}.png",dpi=600)
 # create plots for counting points predicting the no of cyclists for 2022 for sum
 
