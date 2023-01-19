@@ -107,6 +107,55 @@ dp = DeterministicProcess(
     additional_terms=[fourier],
     drop=True)
 
+def plot_residuals(residuals, name, set_type, label, colors, ymax):
+    # histogram
+    ax = plt.axes()
+
+    for resid, col in zip(residuals, colors):
+        counts, bins = np.histogram(resid, bins = 12)
+        
+        #fig, ax = plt.subplots()
+        plt.hist(bins[:-1], bins, weights=counts, color = col, stacked = True, alpha = 0.6)
+        
+        plt.ylim([0, ymax])
+        plt.title(set_type +' '+ name, size = 18)
+        plt.ylabel('count',  size = 15)
+        plt.yticks(fontsize = 12) 
+        plt.xlabel('residual',  size = 15)
+        plt.xticks(fontsize = 15) 
+        plt.vlines(np.mean(resid), 0, ymax, color = col)
+
+        # remove grid and axes
+    plt.grid(False)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    plt.legend(label, fontsize = 15)
+    plt.show()
+
+def plot_real_predicted(y_real, y_pred, name, set_type, label, colors, line_min, line_max):
+    # dot plot
+    ax = plt.axes()
+
+    for real, pred, col in zip(y_real, y_pred, colors):
+        plt.plot(real, pred, 'p', color = col)
+        plt.title(set_type +' '+ name, size = 18)
+        plt.ylabel('predicted values',  size = 15)
+        plt.yticks(fontsize = 12) 
+        plt.xlabel('real values',  size = 15)
+        plt.xticks(fontsize = 15) 
+        
+        # remove grid and axes
+        plt.grid(False)
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        
+    plt.plot(range(line_min,line_max), range(line_min,line_max), 'black')
+    label.insert(len(label), 'perfect prediction')
+    plt.legend(label, fontsize = 15)
+    plt.show()
+
+
+
 col_train = 'blue'
 col_control = 'orangered'
 col_test = 'orange'
