@@ -107,26 +107,47 @@ dp = DeterministicProcess(
     additional_terms=[fourier],
     drop=True)
 
+col_train = 'blue'
+col_control = 'orangered'
+col_test = 'orange'
+
 X = dp.in_sample()  # create features for dates in tunnel.index
 
-# create plots for counting points predicting the no of cyclists for 2022 for each measure point or sum
 only_sum=True
 if only_sum:
+# model and plot over the sum of all three stations
     loc="Tübingen"
-    fig, a = plt.subplots(1,1)
-    y = df_train.sum(axis=1)
+    y_train = df_train.sum(axis=1)
+    
+    #fit the model
     model = LinearRegression(fit_intercept=False)
-    _ = model.fit(X, y)
-    y_pred = pd.Series(model.predict(X), index=y.index) 
-    X_fore = dp.out_of_sample(48)
-    y_fore = pd.Series(model.predict(X_fore), index=X_fore.index)
+    _ = model.fit(X, y_train)
+    y_train_pred = pd.Series(model.predict(X), index=y_train.index) 
+
+    # make model prediction for 01.01.2022 - 27.11.2022
+    X_test = dp.out_of_sample(len(cyclists22_before.sum(axis=1))+ len(cyclists22_after.sum(axis=1)))
+    y_pred = pd.Series(model.predict(X_test), index=X_test.index)
+    
+    # get the control data (01.01.2022-05.04.2022)
+    y_control = cyclists22_before.sum(axis=1)
+    y_control_pred = y_pred.filter(pd.date_range("2022"+start_date_before, "2022"+end_date_before, freq='W'))
+    
+    # get the test data (06.04.2022 -  27.11.2022)
+    y_test = cyclists22_after.sum(axis=1)
+    y_test_pred = y_pred.filter(pd.date_range("2022"+start_date_after, "2022"+end_date_after, freq='W'))
+    
+    #### plot the regression plot
+    fig, a = plt.subplots(1,1)
     tit=f" {loc} Cycle Traffic - Seasonal Forecast"
-    cyclists22_before.sum(axis=1).plot(color="red",style='^', label="Test data bef. blocking")
-    cyclists22_after.sum(axis=1).plot(color="red",style='*', label="Test data aft. blocking")
-    a.vlines(dates22_after[0], df.sum(axis=1).min(), df.sum(axis=1).max(),color="darkgrey", linestyles="dashed", label="Mühlstraße blocked for cars")    
-    a = y.plot(color="blue", style='.', label="Train data", title=tit)
-    a = y_pred.plot(ax=a, label="Train pred.")
-    a = y_fore.plot(ax=a, label="Test pred.", color='red')
+    cyclists22_before.sum(axis=1).plot(color=col_control,style='^', label="Test data bef. blocking")
+    cyclists22_after.sum(axis=1).plot(color=col_test,style='*', label="Test data aft. blocking")
+    a = a.vlines(dates22_after[0], df.sum(axis=1).min(), df.sum(axis=1).max(),color="darkgrey", linestyles="dashed", label="Mühlstraße blocked for cars")    
+
+    a = y_train.plot(color=col_train, style='.', label="Train data", title=tit)
+    a = y_train_pred.plot(ax=a, label="Train pred.")
+    a = y_test_pred.plot(ax=a, label="Test pred.", color=col_test)
+    a = y_control_pred.plot(ax=a, label="Control pred.", color=col_control)
+
     a.spines['top'].set_visible(False)
     a.spines['right'].set_visible(False)
     a.grid(False)
@@ -134,38 +155,92 @@ if only_sum:
     plt.ylabel("No. of cyclists/week")
     _ = a.legend(ncol=2,loc="lower left")
     plt.tight_layout()
-    #   print(y_fore)
-    #plt.show()
     plt.savefig(f"{loc}_pred_fourierno{fourierno}.png",dpi=600)
-
-else:
-    for loc in ["Tunnel","Steinlach","Hirschau"]:
-        fig, a = plt.subplots(1,1)
-        y = df_train[loc]
-        model = LinearRegression(fit_intercept=False)
-        _ = model.fit(X, y)
-
-        y_pred = pd.Series(model.predict(X), index=y.index) 
-        X_fore = dp.out_of_sample(48)
-        y_fore = pd.Series(model.predict(X_fore), index=X_fore.index)
-        tit=f" {loc} Traffic - Seasonal Forecast"
-        cyclists22_before[loc].plot(color="red",style='^', label="Test data bef. blocking")
-        cyclists22_after[loc].plot(color="red",style='*', label="Test data aft. blocking")
-        a.vlines(dates22_after[0], df[loc].min(), df[loc].max(),color="darkgrey", linestyles="dashed", label="Mühlstraße blocked for cars")    
-        a = y.plot(color="blue", style='.', label="Train data", title=tit)
-        a = y_pred.plot(ax=a, label="Train pred.")
-        a = y_fore.plot(ax=a, label="Test pred.", color='red')
-        a.spines['top'].set_visible(False)
-        a.spines['right'].set_visible(False)
-        a.grid(False)
-        plt.xlabel("date")
-        plt.ylabel("No. of cyclists/week")
-        _ = a.legend(loc="lower left")
-        plt.tight_layout()
-        plt.savefig(f"{loc}_pred_fourierno{fourierno}.png",dpi=600)
-# create plots for counting points predicting the no of cyclists for 2022 for sum
+    plt.show()
+    
+    ####### plot residuals in histogram
+    # 1) train data
+    resid_train = y_train.values - y_train_pred.values
+    plot_residuals([resid_train], '(' + str(loc) + ')', 'trainset', ['train set'], [col_train], 50)
+    
+    # 2) control vs test
+    resid_control = y_control.values - y_control_pred.values
+    resid_test = y_test.values - y_test_pred.values
+    plot_residuals([resid_control, resid_test], '(' + str(loc) + ')', 'control vs test', 
+                   ['control set', 'test set'], [col_control, col_test], 8)
+    
+    ######## real vs. predicted values
+    #1) train set
+    plot_real_predicted([y_train.values], [y_train_pred.values], '(' + str(loc) + ')', 'trainset', ['train set'], 
+                        [col_train], min(y_train), max(y_train))
+    # 2) control set
+    line_min = int(min(min(y_control), min(y_test)))
+    line_max = int(max(max(y_control), max(y_test)))
 
     
+    plot_real_predicted([y_control.values, y_test], [y_control_pred.values, y_test_pred],
+                        '(' + str(loc) + ')', 'control vs test', ['control set', 'test set'], 
+                        [col_control, col_test], line_min, line_max)
+    
+else:
+# model and plot for each station individually
+    for loc in ["Tunnel","Steinlach","Hirschau"]:
+        
+        # fit the model (01.01.2018- 31.12.2021)
+        y_train = df_train[loc]
+        model = LinearRegression(fit_intercept=False)
+        _ = model.fit(X, y_train)
+        y_train_pred = pd.Series(model.predict(X), index=y_train.index)
+
+        # make model prediction for 01.01.2022 - 27.11.2022
+        X_test = dp.out_of_sample(len(cyclists22_after[loc])+ len(cyclists22_before[loc]))
+        y_pred = pd.Series(model.predict(X_test), index=X_test.index)
+
+        # get the control data (01.01.2022-05.04.2022)
+        y_control = cyclists22_before[loc]
+        y_control_pred = y_pred.filter(pd.date_range("2022"+start_date_before, "2022"+end_date_before, freq='W'))
+
+        # get the test data (06.04.2022 -  27.11.2022)
+        y_test = cyclists22_after[loc]
+        y_test_pred = y_pred.filter(pd.date_range("2022"+start_date_after, "2022"+end_date_after, freq='W'))
+        
+        
+        ######## plot the regression plot
+        fig, a = plt.subplots(1,1)
+        tit=f" {loc} Traffic - Seasonal Forecast"
+        cyclists22_before[loc].plot(color=col_control,style='^', label="Test: Cycl. before blocking")
+        cyclists22_after[loc].plot(color=col_test,style='*', label="Test: Cycl. after blocking")
+        a = y_train.plot(color=col_train, style='.', label="Train data", title=tit)
+        a = y_train_pred.plot(ax=a, label="Train pred.")
+        a = y_test_pred.plot(ax=a, label="Test pred.", color=col_test)
+        a = y_control_pred.plot(ax=a, label="Control pred.", color=col_control)
+        _ = a.legend(loc="lower left")
+        plt.show()
+
+        ######## plot residuals in histogram
+        # 1) train data
+        resid_train = y_train.values - y_train_pred.values
+        plot_residuals([resid_train], '(' + str(loc) + ')', 'trainset', ['train set'], [col_train], 50)
+
+        # 2) control vs test
+        resid_control = y_control.values - y_control_pred.values
+        resid_test = y_test.values - y_test_pred.values
+        plot_residuals([resid_test, resid_control], '(' + str(loc) + ')', 'control vs test', 
+                       ['test set', 'control set'], [col_test, col_control], 8)
+
+        ######## real vs. predicted values
+        #1) train set
+        plot_real_predicted([y_train.values], [y_train_pred.values], '(' + str(loc) + ')', 'trainset', ['train set'], 
+                            [col_train], min(y_train), max(y_train))
+        # 2) control set
+        line_min = int(min(min(y_control), min(y_test)))
+        line_max = int(max(max(y_control), max(y_test)))
+        plot_real_predicted([y_test, y_control], [y_test_pred, y_control_pred],
+                            '(' + str(loc) + ')', 'control vs test', ['test set', 'control set'], 
+                            [col_test, col_control], line_min, line_max)
+
+
+
 for loc in ["Tunnel","Steinlach","Hirschau"]:
     y = df_train[loc]
     model = LinearRegression(fit_intercept=False)
