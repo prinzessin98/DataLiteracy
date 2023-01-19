@@ -1,5 +1,3 @@
-#import math
-#import scipy
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd 
@@ -13,7 +11,6 @@ from yellowbrick.regressor import ResidualsPlot, PredictionError
 
 register_matplotlib_converters()
 ##Loading the data
-#path ="C:/Users/Fynn/Documents/Uni/Master/DataLiteracy/Project/Daten/data.csv"
 p = Path.cwd()
 p = str(p)+"/Daten/data.csv"
 raw_df =  pd.read_csv(p, header=1,sep=";", names=['date','Tunnel','Steinlach','Hirschau'])
@@ -22,7 +19,6 @@ raw_df.head
 raw_df['date']=pd.to_datetime(raw_df['date']).dt.date
 raw_df=raw_df.groupby(['date']).sum()
 df=raw_df.copy()
-#print(df.head())
 #introduce weeks as new time index to sum up days
 weeks = pd.date_range('2018-01-01', '2022-11-27', freq='W').to_numpy()
 weeks= np.repeat(weeks, 7)
@@ -30,13 +26,8 @@ weeks= np.repeat(weeks, 7)
 df['week']= weeks.tolist()
 df['week']=pd.to_datetime(df['week']).dt.date
 df=df.groupby('week').sum()
-
-#print(df.tail())
-#plotten
-#plt.plot(raw_df)
-#plt.plot(df)
-#plt.show()
 df.index=pd.to_datetime(df.index)
+
 ############# Parameters ######################
 
 start_date_before="-01-01"
@@ -63,13 +54,17 @@ dates22_after = pd.date_range("2022"+start_date_after, "2022"+end_date_after, fr
 if (not isinstance(df.index, np.ndarray)):
     df.index = df.index.date 
 cyclists22= df.filter(items=pd.date_range("2022"+start_date_test, "2022"+end_date_after, freq='W').date)
+
 cyclists22_before= df.filter(items=list(dates22_before),axis=0)
 cyclists22_after= df.filter(items=list(dates22_after),axis=0)
+
 ########### Prediction with seasonality #######################
-fourierno=15
-fourier = CalendarFourier(freq="A", order=fourierno)  # 15 sin/cos pairs for "A"nnual seasonality
 
+#number of fourier pairs
+fourierno=3
+fourier = CalendarFourier(freq="A", order=fourierno)  # sin/cos pairs for Annual seasonality
 
+# function to plot a periodogram
 def plot_periodogram(ts, detrend='linear', ax=None):
     from scipy.signal import periodogram
     fs = pd.Timedelta("1Y") / pd.Timedelta("1W")
@@ -102,31 +97,33 @@ def plot_periodogram(ts, detrend='linear', ax=None):
     return ax
 #plot_periodogram(df["Tunnel"])
 #plt.show()
+
+#fitiing fourier pairs to data
 dp = DeterministicProcess(
     index=df_train.index,
-    constant=True,               # dummy feature for bias (y-intercept)
-    order=1,                     # trend (order 1 means linear)
-    seasonal=True,               # weekly seasonality (indicators)
-    additional_terms=[fourier],  # annual seasonality (fourier)
-    drop=True,                   # drop terms to avoid collinearity
-)
+    constant=True,               
+    order=1,                     
+    seasonal=True,               
+    additional_terms=[fourier],
+    drop=True)
 
 X = dp.in_sample()  # create features for dates in tunnel.index
-#print(X)
-# create plots for counting points predicting the no of cyclists for 2022
-for loc in ["Tunnel","Steinlach","Hirschau"]:
+
+# create plots for counting points predicting the no of cyclists for 2022 for each measure point or sum
+only_sum=True
+if only_sum:
+    loc="Tübingen"
     fig, a = plt.subplots(1,1)
-    y = df_train[loc]
+    y = df_train.sum(axis=1)
     model = LinearRegression(fit_intercept=False)
     _ = model.fit(X, y)
-
     y_pred = pd.Series(model.predict(X), index=y.index) 
     X_fore = dp.out_of_sample(48)
     y_fore = pd.Series(model.predict(X_fore), index=X_fore.index)
-    tit=f" {loc} Traffic - Seasonal Forecast"
-    cyclists22_before[loc].plot(color="red",style='^', label="Test data bef. blocking")
-    cyclists22_after[loc].plot(color="red",style='*', label="Test data aft. blocking")
-    a.vlines(dates22_after[0], df[loc].min(), df[loc].max(),color="darkgrey", linestyles="dashed", label="Mühlstraße blocked for cars")    
+    tit=f" {loc} Cycle Traffic - Seasonal Forecast"
+    cyclists22_before.sum(axis=1).plot(color="red",style='^', label="Test data bef. blocking")
+    cyclists22_after.sum(axis=1).plot(color="red",style='*', label="Test data aft. blocking")
+    a.vlines(dates22_after[0], df.sum(axis=1).min(), df.sum(axis=1).max(),color="darkgrey", linestyles="dashed", label="Mühlstraße blocked for cars")    
     a = y.plot(color="blue", style='.', label="Train data", title=tit)
     a = y_pred.plot(ax=a, label="Train pred.")
     a = y_fore.plot(ax=a, label="Test pred.", color='red')
@@ -135,11 +132,41 @@ for loc in ["Tunnel","Steinlach","Hirschau"]:
     a.grid(False)
     plt.xlabel("date")
     plt.ylabel("No. of cyclists/week")
-    _ = a.legend(loc="lower left")
+    _ = a.legend(ncol=2,loc="lower left")
     plt.tight_layout()
- #   print(y_fore)
+    #   print(y_fore)
     #plt.show()
     plt.savefig(f"{loc}_pred_fourierno{fourierno}.png",dpi=600)
+
+else:
+    for loc in ["Tunnel","Steinlach","Hirschau"]:
+        fig, a = plt.subplots(1,1)
+        y = df_train[loc]
+        model = LinearRegression(fit_intercept=False)
+        _ = model.fit(X, y)
+
+        y_pred = pd.Series(model.predict(X), index=y.index) 
+        X_fore = dp.out_of_sample(48)
+        y_fore = pd.Series(model.predict(X_fore), index=X_fore.index)
+        tit=f" {loc} Traffic - Seasonal Forecast"
+        cyclists22_before[loc].plot(color="red",style='^', label="Test data bef. blocking")
+        cyclists22_after[loc].plot(color="red",style='*', label="Test data aft. blocking")
+        a.vlines(dates22_after[0], df[loc].min(), df[loc].max(),color="darkgrey", linestyles="dashed", label="Mühlstraße blocked for cars")    
+        a = y.plot(color="blue", style='.', label="Train data", title=tit)
+        a = y_pred.plot(ax=a, label="Train pred.")
+        a = y_fore.plot(ax=a, label="Test pred.", color='red')
+        a.spines['top'].set_visible(False)
+        a.spines['right'].set_visible(False)
+        a.grid(False)
+        plt.xlabel("date")
+        plt.ylabel("No. of cyclists/week")
+        _ = a.legend(loc="lower left")
+        plt.tight_layout()
+     #   print(y_fore)
+        #plt.show()
+        plt.savefig(f"{loc}_pred_fourierno{fourierno}.png",dpi=600)
+# create plots for counting points predicting the no of cyclists for 2022 for sum
+
     
 for loc in ["Tunnel","Steinlach","Hirschau"]:
     y = df_train[loc]
