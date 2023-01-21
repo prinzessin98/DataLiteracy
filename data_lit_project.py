@@ -153,7 +153,12 @@ def plot_real_predicted(y_real, y_pred, name, set_type, label, colors, line_min,
     label.insert(len(label), 'perfect prediction')
     plt.legend(label, fontsize = 15)
     plt.show()
-
+    
+    
+def welch_dof(x,y):
+    dof = (x.var()/x.size + y.var()/y.size)**2 / ((x.var()/x.size)**2 / (x.size-1) + (y.var()/y.size)**2 / (y.size-1))
+    print(f"Welch-Satterthwaite Degrees of Freedom= {dof:.4f}")
+        
 
 
 col_train = 'blue'
@@ -230,6 +235,37 @@ if only_sum:
     plot_real_predicted([y_control.values, y_test], [y_control_pred.values, y_test_pred],
                         '(' + str(loc) + ')', 'control vs test', ['control set', 'test set'], 
                         [col_control, col_test], line_min, line_max)
+    
+    
+    print('residuals control-mean: ', np.mean(resid_control), 'sd: ', np.std(resid_control))
+    print('residuals test-mean: ', np.mean(resid_test), 'sd: ', np.std(resid_test))
+    print('residuals training-mean: ', np.mean(resid_train), 'sd: ', np.std(resid_train))
+    var_diff2 = np.var(resid_test) + np.var(resid_train)
+    var_diff = np.var(resid_control) + np.var(resid_test)
+    print('difference (control-test) residuals -mean: ', np.mean(resid_control) - np.mean(resid_test), 
+          'sd: ', np.sqrt(var_diff))
+    print('difference (test-train) residuals -mean: ', np.mean(resid_test)-np.mean(resid_train), 
+          'sd: ', np.sqrt(var_diff2))
+    var_diff3 = np.var(resid_control) + np.var(resid_train)
+    print('difference (control-train) residuals -mean: ', np.mean(resid_control)-np.mean(resid_train), 
+          'sd: ', np.sqrt(var_diff3))
+    
+    print('----------------------------------------------------------------')
+    print('control and train')
+    print('statistic:',ttest_ind(resid_train, resid_control, equal_var=False).statistic)
+    print('pval:', ttest_ind(resid_train, resid_control, equal_var=False).pvalue)
+    welch_dof(resid_train, resid_control)
+    
+    print('test and train')
+    print('statistic:',ttest_ind(resid_train, resid_test, equal_var=False).statistic)
+    print('pval:', ttest_ind(resid_test, resid_train, equal_var=False).pvalue)
+    welch_dof(resid_test, resid_train)
+
+    
+    print('control and test')
+    print('statistic:',ttest_ind(resid_train, resid_test, equal_var=False).statistic)
+    print('pval:', ttest_ind(resid_control, resid_test, equal_var=False).pvalue)
+    welch_dof(resid_control, resid_test)
     
 else:
 # model and plot for each station individually
